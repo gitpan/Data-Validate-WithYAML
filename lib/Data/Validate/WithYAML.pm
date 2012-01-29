@@ -8,10 +8,8 @@ use YAML::Tiny;
 
 # ABSTRACT: Validation framework that can be configured with YAML files
 
-
-our $VERSION = '0.08';
-my (%required,%optional);
-our $errstr = '';
+our $VERSION = '0.09';
+our $errstr  = '';
 
 
 sub new{
@@ -20,19 +18,32 @@ sub new{
     my $self = {};
     bless $self,$class;
     
+    $self->{__optional__} = {};
+    $self->{__required__} = {};
+    
     $self->_yaml_config($filename) or return undef;
     $self->_allow_subs($args{allow_subs});
     
     return $self;
 }
 
+sub _optional {
+    my ($self) = @_;
+    $self->{__optional__};
+}
+
+sub _required {
+    my ($self) = @_;
+    $self->{__required__};
+}
+
 
 sub set_optional {
     my ($self,$field) = @_;
     
-    my $value = delete $required{$field};
+    my $value = delete $self->_required->{$field};
     if( $value ) {
-        $optional{$field} = $value;
+        $self->_optional->{$field} = $value;
     }
 }
 
@@ -40,15 +51,58 @@ sub set_optional {
 sub set_required {
     my ($self,$field) = @_;
     
-    my $value = delete $optional{$field};
+    my $value = delete $self->_optional->{$field};
     if( $value ) {
-        $required{$field} = $value;
+        $self->_required->{$field} = $value;
     }
 }
 
 
 sub validate{
     my ($self,$part,%hash) = @_;
+    
+    my @fieldnames  = $self->fieldnames( $part );
+    
+    my %errors;
+    my %fields;
+    my $optional = $self->_optional;
+    my $required = $self->_required; 
+    
+    for my $name ( @fieldnames ) {
+        $fields{$name} = $optional->{$name} if exists $optional->{$name};
+        $fields{$name} = $required->{$name} if exists $required->{$name};
+        
+        next if !$fields{$name};
+        next if $fields{$name}->{no_validate};
+        
+        my $value = $hash{$name};
+        
+        my $depends_on = $fields{$name}->{depends_on};
+        if ( $depends_on ) {
+            if ( !$hash{$depends_on} ) {
+                $errors{$name} = $self->message( $name );
+                next;
+            }
+            
+            my $depens_on_value = $hash{$depends_on};
+            my $cases = $fields{$name}->{case} || {};
+            
+            #if ( !$cases->{$value} ) {
+            #    $errors{$name} = $self->message( $name );
+            #    next;
+            #}
+            
+            $fields{$name} = $cases->{$depens_on_value} if $cases->{$depens_on_value};
+        }
+        
+        $fields{$name}->{type} ||= 'optional';
+        my $success = $self->check( $name, $hash{$name}, $fields{$name} );
+        if ( !$success ) {
+            $errors{$name} = $self->message( $name );
+        }
+    }
+    
+    return %errors;
 }
 
 
@@ -73,7 +127,6 @@ sub fieldnames{
         
         @names = keys %hash;
     }
-    
 
     return @names;
 }
@@ -88,7 +141,7 @@ sub errstr{
 sub message {
     my ($self,$field) = @_;
     
-    my $subhash = $required{$field} || $optional{$field};
+    my $subhash = $self->_required->{$field} || $self->_optional->{$field};
     my $message = "";
     
     if ( $subhash->{message} ) {
@@ -115,7 +168,7 @@ sub check_list {
 
 
 sub check{
-    my ($self,$field,$value) = @_;
+    my ($self,$field,$value,$definition) = @_;
     
     my %dispatch = (
         min    => \&_min,
@@ -125,13 +178,19 @@ sub check{
         enum   => \&_enum,
         sub    => \&_sub,
     );
-                    
-    my $subhash = $required{$field} || $optional{$field};
+                
+    my $subhash = $definition || $self->_required->{$field} || $self->_optional->{$field};
     
-    if( exists $required{$field} ){
+    if(
+        ( $definition and $definition->{type} eq 'required' )
+        or ( !$definition and exists $self->_required->{$field} )
+        ){
         return 0 unless defined $value and length $value;
     }
-    elsif( exists $optional{$field} and (not defined $value or not length $value) ){
+    elsif( 
+        ( ( $definition and $definition->{type} eq 'optional' ) 
+        or ( !$definition and exists $self->_optional->{$field} ) )
+        and (not defined $value or not length $value) ){
         return 1;
     }
     
@@ -175,13 +234,13 @@ sub _yaml_config{
             for my $field(keys %$sec_hash){
                 if(exists $sec_hash->{$field}->{type} and 
                           $sec_hash->{$field}->{type} eq 'required'){
-                    $required{$field} = $sec_hash->{$field};
-                    if( exists $optional{$field} ){
-                        delete $optional{$field};
+                    $self->_required->{$field} = $sec_hash->{$field};
+                    if( exists $self->_optional->{$field} ){
+                        delete $self->_optional->{$field};
                     }
                 }
-                elsif( not exists $required{$field} ){
-                    $optional{$field} = $sec_hash->{$field};
+                elsif( not exists $self->_required->{$field} ){
+                    $self->_optional->{$field} = $sec_hash->{$field};
                 }
 
                 push @{$self->{fieldnames}->{$section}}, $field;
@@ -264,7 +323,7 @@ Data::Validate::WithYAML - Validation framework that can be configured with YAML
 
 =head1 VERSION
 
-version 0.08
+version 0.09
 
 =head1 SYNOPSIS
 
@@ -307,10 +366,6 @@ data.yml
           type: required
           min: 18
           max: 65
-
-=head1 VERSION
-
-Version 0.08
 
 =head1 METHODS
 

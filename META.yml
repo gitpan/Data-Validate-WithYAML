@@ -16,4 +16,4 @@ requires:
   Test::CheckManifest: 1.24
   Test::More: 0
   YAML::Tiny: 1.03
-version: 0.08
+version: 0.09
