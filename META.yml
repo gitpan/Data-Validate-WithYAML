@@ -6,7 +6,7 @@ build_requires: {}
 configure_requires:
   ExtUtils::MakeMaker: 6.30
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 4.300003, CPAN::Meta::Converter version 2.112621'
+generated_by: 'Dist::Zilla version 4.300039, CPAN::Meta::Converter version 2.120921'
 license: artistic_2
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -16,4 +16,8 @@ requires:
   Test::CheckManifest: 1.24
   Test::More: 0
   YAML::Tiny: 1.03
-version: 0.09
+resources:
+  bugtracker: http://github.com/reneeb/Data-Validate-WithYAML/issues
+  homepage: http://github.com/reneeb/Data-Validate-WithYAML
+  repository: http://github.com/reneeb/Data-Validate-WithYAML.git
+version: 0.10

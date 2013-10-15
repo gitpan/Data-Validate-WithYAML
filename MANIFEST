@@ -20,6 +20,7 @@ t/10_subs_not_allowed.t
 t/11_plugin_with_config.t
 t/12_validate.t
 t/13_depends_on.t
+t/14_no_step.t
 t/99_check_manifest.t
 t/Data/Validate/WithYAML/Plugin/TestPlugin.pm
 t/boilerplate.t
@@ -30,3 +31,4 @@ t/test2.yml
 t/test3.yml
 t/test4.yml
 t/test5.yml
+t/test6.yml
