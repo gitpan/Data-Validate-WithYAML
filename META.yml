@@ -20,4 +20,4 @@ resources:
   bugtracker: http://github.com/reneeb/Data-Validate-WithYAML/issues
   homepage: http://github.com/reneeb/Data-Validate-WithYAML
   repository: http://github.com/reneeb/Data-Validate-WithYAML.git
-version: 0.10
+version: 0.11

@@ -21,6 +21,7 @@ t/11_plugin_with_config.t
 t/12_validate.t
 t/13_depends_on.t
 t/14_no_step.t
+t/15_fieldinfo.t
 t/99_check_manifest.t
 t/Data/Validate/WithYAML/Plugin/TestPlugin.pm
 t/boilerplate.t
