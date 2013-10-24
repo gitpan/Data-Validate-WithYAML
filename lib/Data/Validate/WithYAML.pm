@@ -8,66 +8,9 @@ use YAML::Tiny;
 
 # ABSTRACT: Validation framework that can be configured with YAML files
 
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 our $errstr  = '';
 
-=head1 SYNOPSIS
-
-Perhaps a little code snippet.
-
-    use Data::Validate::WithYAML;
-
-    my $foo = Data::Validate::WithYAML->new( 'test.yml' );
-    my %map = (
-        name     => 'Test Person',
-        password => 'xasdfjakslr453$',
-        plz      => 64569,
-        word     => 'Herr',
-        age      => 55,
-    );
-    
-    for my $field ( keys %map ){
-        print "ok: ",$map{$field},"\n" if $foo->check( $field, $map{$field} );
-    }
-
-data.yml
-
-  ---
-  step1:
-      name:
-          type: required
-          length: 8,122
-      password:
-          type: required
-          length: 10,
-      plz:
-          regex: ^\d{4,5}$
-          type: optional
-      word:
-          enum:
-              - Herr
-              - Frau
-              - Firma
-      age:
-          type: required
-          min: 18
-          max: 65
-  
-
-=head1 METHODS
-
-=head2 new
-
-  my $foo = Data::Validate::WithYAML->new( 'filename' );
-  my $foo = Data::Validate::WithYAML->new(
-      'filename',
-      allow_subs => 1,
-      no_steps   => 1,
-  );
-
-creates a new object.
-
-=cut
 
 sub new{
     my ($class,$filename,%args) = @_;
@@ -101,11 +44,6 @@ sub _no_steps {
     $self->{__no_steps__};
 }
 
-=head2 set_optional
-
-This method makes a field optional if it was required
-
-=cut
 
 sub set_optional {
     my ($self,$field) = @_;
@@ -116,11 +54,6 @@ sub set_optional {
     }
 }
 
-=head2 set_required
-
-This method makes a field required if it was optional
-
-=cut
 
 sub set_required {
     my ($self,$field) = @_;
@@ -131,18 +64,6 @@ sub set_required {
     }
 }
 
-=head2 validate
-
-This subroutine validates one form. You have to pass the form name (key in the
-config file), a hash with fieldnames and its values
-
-    my %fields = (
-        username => $cgi->param('user'),
-        passwort => $password,
-    );
-    $foo->validate( 'step1', %fields );
-
-=cut
 
 sub validate{
     my $self = shift;
@@ -201,9 +122,6 @@ sub validate{
     return %errors;
 }
 
-=head2 fieldnames
-
-=cut
 
 sub fieldnames{
     my $self = shift;
@@ -240,22 +158,12 @@ sub fieldnames{
     return @names;
 }
 
-=head2 errstr
-
-=cut
 
 sub errstr{
     my ($self) = @_;
     return $errstr;
 }
 
-=head2 message
-
-returns the message if specified in YAML
-
-  $obj->message( 'fieldname' );
-
-=cut
 
 sub message {
     my ($self,$field) = @_;
@@ -270,19 +178,6 @@ sub message {
     $message;
 }
 
-=head2 check_list
-
-  $obj->check_list('fieldname',['value','value2']);
-
-Checks if the values match the validation criteria. Returns an arrayref with
-checkresults:
-
-    [
-        1,
-        0,
-    ] 
-
-=cut
 
 sub check_list {
     my ($self,$field,$values) = @_;
@@ -298,14 +193,6 @@ sub check_list {
     return \@results;
 }
 
-=head2 check
-
-  $obj->check('fieldname','value');
-
-checks if a value is valid. returns 1 if the value is valid, otherwise it
-returns 0.
-
-=cut
 
 sub check{
     my ($self,$field,$value,$definition) = @_;
@@ -361,31 +248,6 @@ sub check{
     return $bool;
 }
 
-=head2 fieldinfo
-
-Returns the config for the given field.
-
-Your test.yml:
-
-  ---
-  age:
-    type: required
-    min: 18
-    max: 65
-
-Your script:
-
-    my $info = $validator->fieldinfo( 'age' );
-
-C<$info> is a hashreference then:
-
-    {
-        type => 'required',
-        min  => 18,
-        max  => 65,
-    }
-
-=cut
 
 sub fieldinfo {
     my ($self, $field) = @_;
@@ -499,3 +361,156 @@ sub _allow_subs {
 }
 
 1;
+
+__END__
+
+=pod
+
+=head1 NAME
+
+Data::Validate::WithYAML - Validation framework that can be configured with YAML files
+
+=head1 VERSION
+
+version 0.13
+
+=head1 SYNOPSIS
+
+Perhaps a little code snippet.
+
+    use Data::Validate::WithYAML;
+
+    my $foo = Data::Validate::WithYAML->new( 'test.yml' );
+    my %map = (
+        name     => 'Test Person',
+        password => 'xasdfjakslr453$',
+        plz      => 64569,
+        word     => 'Herr',
+        age      => 55,
+    );
+    
+    for my $field ( keys %map ){
+        print "ok: ",$map{$field},"\n" if $foo->check( $field, $map{$field} );
+    }
+
+data.yml
+
+  ---
+  step1:
+      name:
+          type: required
+          length: 8,122
+      password:
+          type: required
+          length: 10,
+      plz:
+          regex: ^\d{4,5}$
+          type: optional
+      word:
+          enum:
+              - Herr
+              - Frau
+              - Firma
+      age:
+          type: required
+          min: 18
+          max: 65
+
+=head1 METHODS
+
+=head2 new
+
+  my $foo = Data::Validate::WithYAML->new( 'filename' );
+  my $foo = Data::Validate::WithYAML->new(
+      'filename',
+      allow_subs => 1,
+      no_steps   => 1,
+  );
+
+creates a new object.
+
+=head2 set_optional
+
+This method makes a field optional if it was required
+
+=head2 set_required
+
+This method makes a field required if it was optional
+
+=head2 validate
+
+This subroutine validates one form. You have to pass the form name (key in the
+config file), a hash with fieldnames and its values
+
+    my %fields = (
+        username => $cgi->param('user'),
+        passwort => $password,
+    );
+    $foo->validate( 'step1', %fields );
+
+=head2 fieldnames
+
+=head2 errstr
+
+=head2 message
+
+returns the message if specified in YAML
+
+  $obj->message( 'fieldname' );
+
+=head2 check_list
+
+  $obj->check_list('fieldname',['value','value2']);
+
+Checks if the values match the validation criteria. Returns an arrayref with
+checkresults:
+
+    [
+        1,
+        0,
+    ] 
+
+=head2 check
+
+  $obj->check('fieldname','value');
+
+checks if a value is valid. returns 1 if the value is valid, otherwise it
+returns 0.
+
+=head2 fieldinfo
+
+Returns the config for the given field.
+
+Your test.yml:
+
+  ---
+  age:
+    type: required
+    min: 18
+    max: 65
+
+Your script:
+
+    my $info = $validator->fieldinfo( 'age' );
+
+C<$info> is a hashreference then:
+
+    {
+        type => 'required',
+        min  => 18,
+        max  => 65,
+    }
+
+=head1 AUTHOR
+
+Renee Baecker <module@renee-baecker.de>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is Copyright (c) 2012 by Renee Baecker.
+
+This is free software, licensed under:
+
+  The Artistic License 2.0 (GPL Compatible)
+
+=cut
