@@ -4,11 +4,12 @@ use strict;
 use warnings;
 
 use Carp;
+use Scalar::Util qw(looks_like_number);
 use YAML::Tiny;
 
 # ABSTRACT: Validation framework that can be configured with YAML files
 
-our $VERSION = '0.14';
+our $VERSION = '0.15';
 our $errstr  = '';
 
 
@@ -195,12 +196,13 @@ sub check{
     my ($self,$field,$value,$definition) = @_;
     
     my %dispatch = (
-        min    => \&_min,
-        max    => \&_max,
-        regex  => \&_regex,
-        length => \&_length,
-        enum   => \&_enum,
-        sub    => \&_sub,
+        min      => \&_min,
+        max      => \&_max,
+        regex    => \&_regex,
+        length   => \&_length,
+        enum     => \&_enum,
+        sub      => \&_sub,
+        datatype => \&_datatype,
     );
                 
     my $subhash = $definition || $self->_required->{$field} || $self->_optional->{$field};
@@ -228,7 +230,7 @@ sub check{
             }
         }
         elsif( $key eq 'plugin' ){
-            my $name     = $subhash->{$key};
+            my ($name)   = $subhash->{$key} =~ m{([A-z0-9_:]+)};
             my $module   = 'Data::Validate::WithYAML::Plugin::' . $name;
             eval "use $module";
             
@@ -303,11 +305,13 @@ sub _add_fields {
 
 sub _min{
     my ($value,$min) = @_;
+    return if !looks_like_number $value;
     return $value >= $min;
 }
 
 sub _max{
     my ($value,$max) = @_;
+    return if !looks_like_number $value;
     return $value <= $max;    
 }
 
@@ -357,6 +361,28 @@ sub _allow_subs {
     $self->{__allow_subs};
 }
 
+sub _datatype {
+    my ($value, $type) = @_;
+
+    $type = lc $type;
+
+    if ( $type eq 'int' ) {
+        return if !looks_like_number $value;
+        return if $value !~ m{\A [+-]? \d+ (?:[eE]\d+)? \z}xms;
+        return 1;
+    }
+    elsif ( $type eq 'num' ) {
+        return if !looks_like_number $value;
+        return 1;
+    }
+    elsif ( $type eq 'positive_int' ) {
+        return if !looks_like_number $value;
+        return _datatype( $value, 'int' ) && $value > 0;
+    }
+
+    croak "Unknown datatype $type";
+}
+
 1;
 
 __END__
@@ -369,7 +395,7 @@ Data::Validate::WithYAML - Validation framework that can be configured with YAML
 
 =head1 VERSION
 
-version 0.14
+version 0.15
 
 =head1 SYNOPSIS
 
@@ -579,6 +605,20 @@ password must be longer than 5 chars and for every other group the password must
 
 Without this setting, a value for the field this field depends on must be given.
 
+=item * datatype
+
+For a few types of values there are predefined checks.
+
+=over 4
+
+=item * num
+
+=item * int
+
+=item * positive_int
+
+=back
+
 =item * plugin
 
 Use a plugin (e.g. C<Data::Validate::WithYAML::Plugin::EMail>) to check the value.
@@ -589,11 +629,11 @@ Use a plugin (e.g. C<Data::Validate::WithYAML::Plugin::EMail>) to check the valu
 
 =head1 AUTHOR
 
-Renee Baecker <module@renee-baecker.de>
+Renee Baecker <reneeb@cpan.org>
 
 =head1 COPYRIGHT AND LICENSE
 
-This software is Copyright (c) 2012 by Renee Baecker.
+This software is Copyright (c) 2014 by Renee Baecker.
 
 This is free software, licensed under:
 

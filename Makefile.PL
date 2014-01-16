@@ -10,7 +10,7 @@ use ExtUtils::MakeMaker 6.30;
 
 my %WriteMakefileArgs = (
   "ABSTRACT" => "Validation framework that can be configured with YAML files",
-  "AUTHOR" => "Renee Baecker <module\@renee-baecker.de>",
+  "AUTHOR" => "Renee Baecker <reneeb\@cpan.org>",
   "BUILD_REQUIRES" => {},
   "CONFIGURE_REQUIRES" => {
     "ExtUtils::MakeMaker" => "6.30"
@@ -20,12 +20,14 @@ my %WriteMakefileArgs = (
   "LICENSE" => "artistic_2",
   "NAME" => "Data::Validate::WithYAML",
   "PREREQ_PM" => {
-    "Test::CheckManifest" => "1.24",
+    "Carp" => 0,
+    "Scalar::Util" => 0,
+    "Test::Exception" => 0,
     "Test::More" => 0,
     "YAML::Tiny" => "1.03"
   },
   "TEST_REQUIRES" => {},
-  "VERSION" => "0.14",
+  "VERSION" => "0.15",
   "test" => {
     "TESTS" => "t/*.t"
   }
